@@ -1,3 +1,11 @@
 [build]
   publish = "."
-  command = ""
+  command = "echo 'Frontend only - no build needed'"
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
