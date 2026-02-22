@@ -1,48 +1,24 @@
-import numpy as np
-from PIL import Image
-import tensorflow as tf
-import io
-import os
-import gdown
+import gdown, zipfile, os
 
-# ─────────────────────────────────────────
-# ⚠️ CONFIGURE THESE
-# ─────────────────────────────────────────
+GDRIVE_FILE_ID = "1UneK9S_Arlb3lvRtOmo-bIbswjJPzbv6"
+MODEL_ZIP_PATH = "model/nutriscan_savedmodel.zip"
+MODEL_PATH = "model/nutriscan_savedmodel"
 
-# Paste your Google Drive file ID here
-# Get it from your shareable link:
-# https://drive.google.com/file/d/  THIS_PART  /view?usp=sharing
-GDRIVE_FILE_ID = "1viicllzL-UBaQR6HyulMTgEyRJNKDWIA"
-
-# Local path where model will be saved after download
-MODEL_PATH = "model/best_malnutrition_model_finetuned.keras"
-
-# Class labels — must match your training order
-CLASS_LABELS = ["healthy", "mild", "moderate", "severe"]
-
-# Input image size
-IMG_SIZE = (224, 224)
-
-# Normalization mode:
-# "divide"       → image / 255.0  (if you normalized manually)
-# "efficientnet" → EfficientNet's built-in preprocess_input
-NORMALIZE_MODE = "divide"
-
-# ─────────────────────────────────────────
-# DOWNLOAD MODEL FROM GOOGLE DRIVE
-# Only downloads if not already present
-# ─────────────────────────────────────────
 def download_model():
     if not os.path.exists(MODEL_PATH):
-        print("Model not found locally. Downloading from Google Drive...")
         os.makedirs("model", exist_ok=True)
+        print("Downloading model from Google Drive...")
         url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
-        gdown.download(url, MODEL_PATH, quiet=False)
-        print("✅ Model downloaded successfully!")
-    else:
-        print("✅ Model already exists locally, skipping download.")
+        gdown.download(url, MODEL_ZIP_PATH, quiet=False)
+        print("Extracting model...")
+        with zipfile.ZipFile(MODEL_ZIP_PATH, 'r') as z:
+            z.extractall("model/")
+        os.remove(MODEL_ZIP_PATH)
+        print("✅ Model ready!")
 
 download_model()
+
+model = tf.keras.models.load_model(MODEL_PATH)
 
 # ─────────────────────────────────────────
 # LOAD MODEL
