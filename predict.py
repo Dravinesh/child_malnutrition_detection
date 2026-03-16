@@ -67,6 +67,33 @@ def preprocess_image(image_bytes: bytes) -> tf.Tensor:
     img_array = np.expand_dims(img_array, axis=0)
     return tf.constant(img_array)
 
+def check_image_quality(image_bytes: bytes) -> bool:
+    """Returns False if image is too dark, blurry or too small"""
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    
+    # Check minimum size
+    if img.width < 100 or img.height < 100:
+        return False
+    
+    # Check if image is too dark
+    arr = np.array(img)
+    if arr.mean() < 20:
+        return False
+    
+    return True
+
+def predict(image_bytes: bytes) -> dict:
+    # Quality check first
+    if not check_image_quality(image_bytes):
+        return {
+            "classification": "uncertain",
+            "confidence": 0.0,
+            "all_scores": {},
+        }
+    # ... rest of predict function
+```
+
+---
 
 # ─────────────────────────────────────────
 # PREDICTION
