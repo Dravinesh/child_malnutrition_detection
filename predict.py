@@ -63,27 +63,33 @@ def preprocess_image(image_bytes: bytes) -> tf.Tensor:
 # ─────────────────────────────────────────
 # PREDICTION
 # ─────────────────────────────────────────
+CONFIDENCE_THRESHOLD = 0.60  # Only accept predictions above 60%
+
 def predict(image_bytes: bytes) -> dict:
     img_tensor = preprocess_image(image_bytes)
-
-    # Run inference using SavedModel signature
     output = infer(img_tensor)
-
-    # Get the output tensor (key may vary — we take the first output)
     output_key = list(output.keys())[0]
-    scores = output[output_key].numpy()[0]  # shape: (4,)
+    scores = output[output_key].numpy()[0]
 
     predicted_index = int(np.argmax(scores))
     predicted_label = CLASS_LABELS[predicted_index]
-    confidence      = float(scores[predicted_index])
+    confidence = float(scores[predicted_index])
 
     all_scores = {
         CLASS_LABELS[i]: round(float(scores[i]), 4)
         for i in range(len(CLASS_LABELS))
     }
 
+    # ✅ Reject low confidence predictions
+    if confidence < CONFIDENCE_THRESHOLD:
+        return {
+            "classification": "uncertain",
+            "confidence": round(confidence, 4),
+            "all_scores": all_scores,
+        }
+
     return {
         "classification": predicted_label,
-        "confidence":     round(confidence, 4),
-        "all_scores":     all_scores,
+        "confidence": round(confidence, 4),
+        "all_scores": all_scores,
     }
