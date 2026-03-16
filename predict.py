@@ -9,7 +9,7 @@ import gdown
 # ─────────────────────────────────────────
 # CONFIGURATION
 # ─────────────────────────────────────────
-GDRIVE_FILE_ID     = "1viicllzL-UBaQR6HyulMTgEyRJNKDWIA"
+GDRIVE_FILE_ID     = "1UneK9S_Arlb3lvRtOmo-bIbswjJPzbv6"
 MODEL_ZIP_PATH     = "model/nutriscan_savedmodel.zip"
 MODEL_PATH         = "model/nutriscan_savedmodel"
 CLASS_LABELS       = ["healthy", "mild", "moderate", "severe"]
