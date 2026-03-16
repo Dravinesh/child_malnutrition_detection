@@ -288,6 +288,22 @@ const dietPlans = {
     ],
     tips: ["⚠ URGENT: Seek hospital care immediately", "Do NOT give high-protein foods in phase 1", "Monitor every 30 mins for hypoglycemia", "Follow WHO inpatient SAM guidelines"],
   },
+  uncertain: {
+    label: "Unable to Determine",
+    color: "#A0AEC0",
+    glow: "0 0 30px rgba(160,174,192,0.3)",
+    icon: "?",
+    description: "The image quality or angle is insufficient for a confident prediction. Please retake the photo in good lighting with the child's face clearly visible.",
+    suggestions: [
+      { meal: "Next Steps", items: ["Retake photo in bright natural light", "Ensure face is fully visible", "Avoid blurry or angled shots"] },
+    ],
+    tips: [
+      "Use natural daylight for best results",
+      "Hold camera steady at face level",
+      "Ensure no shadows on the face",
+      "Try uploading a clearer image"
+    ],
+  },
 };
 
 let currentPreview = null;
