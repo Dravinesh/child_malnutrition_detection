@@ -53,10 +53,18 @@ print("✅ Model loaded successfully!")
 # ─────────────────────────────────────────
 def preprocess_image(image_bytes: bytes) -> tf.Tensor:
     img = Image.open(io.BytesIO(image_bytes))
+    
+    # ✅ Fix 1: Handle all image modes properly
     img = img.convert("RGB")
-    img = img.resize(IMG_SIZE)
-    img_array = np.array(img, dtype=np.float32) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)  # shape: (1, 224, 224, 3)
+    
+    # ✅ Fix 2: Use LANCZOS for better quality resize
+    img = img.resize(IMG_SIZE, Image.LANCZOS)
+    
+    # ✅ Fix 3: Use same preprocessing as EfficientNetB0 training
+    img_array = np.array(img, dtype=np.float32)
+    img_array = tf.keras.applications.efficientnet.preprocess_input(img_array)
+    
+    img_array = np.expand_dims(img_array, axis=0)
     return tf.constant(img_array)
 
 
