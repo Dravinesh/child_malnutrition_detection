@@ -5,8 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>NutriScan</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
-  <!-- Face detection -->
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <!-- Face detection with fallback -->
+  <script>
+    // Try loading face-api, fall back gracefully if blocked
+    var faceApiScript = document.createElement('script');
+    faceApiScript.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
+    faceApiScript.onerror = function() {
+      console.log('Face API CDN blocked, using fallback mode');
+      window.faceApiBlocked = true;
+    };
+    document.head.appendChild(faceApiScript);
+  </script>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -108,12 +117,12 @@
     /* ✅ NEW: Malnutrition level indicator bar */
     .level-indicator { display: flex; gap: 6px; margin: 4px 0; }
     .level-pill {
-      flex: 1; padding: 6px 4px; border-radius: 10px; text-align: center;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.3);
+      flex: 1; padding: 8px 4px; border-radius: 10px; text-align: center;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.25);
       background: rgba(255,255,255,0.04); transition: all 0.3s;
     }
-    .level-pill.active { color: #08091A; border-color: transparent; }
+    .level-pill.active { color: #08091A !important; border-color: transparent !important; font-weight: 800; }
 
     .confidence-row { display: flex; align-items: center; gap: 12px; }
     .conf-bar-bg { flex: 1; height: 6px; background: rgba(0,0,0,0.3); border-radius: 100px; overflow: hidden; }
@@ -187,7 +196,7 @@
       <p class="cam-hint">Position child's face inside the guide</p>
       <div class="cam-controls">
         <button class="cancel-cam" onclick="stopCamera()">Cancel</button>
-        <button class="capture-btn" id="captureBtn" onclick="capturePhoto()" disabled></button>
+        <button class="capture-btn" id="captureBtn" onclick="capturePhoto()"></button>
       </div>
       <canvas id="canvas" style="display:none"></canvas>
     </div>
@@ -224,12 +233,15 @@
         <div class="class-badge" id="classBadge"></div>
         <div class="class-label" id="classLabel"></div>
 
-        <!-- ✅ NEW: Level indicator pills -->
-        <div class="level-indicator">
-          <div class="level-pill" id="pill-healthy">Healthy</div>
-          <div class="level-pill" id="pill-mild">Mild</div>
-          <div class="level-pill" id="pill-moderate">Moderate</div>
-          <div class="level-pill" id="pill-severe">Severe</div>
+        <!-- ✅ Malnutrition level label + indicator pills -->
+        <div style="margin: 2px 0 0;">
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Malnutrition Level</div>
+          <div class="level-indicator" id="levelIndicator">
+            <div class="level-pill" id="pill-healthy">Healthy</div>
+            <div class="level-pill" id="pill-mild">Mild</div>
+            <div class="level-pill" id="pill-moderate">Moderate</div>
+            <div class="level-pill" id="pill-severe">Severe</div>
+          </div>
         </div>
 
         <div class="confidence-row">
@@ -697,7 +709,7 @@ function showResult(classification, confidence, isDemo) {
   });
 
   // Hide pills for uncertain
-  document.querySelector('.level-indicator').style.display = plan.levelKey ? 'flex' : 'none';
+  document.getElementById('levelIndicator').style.display = plan.levelKey ? 'flex' : 'none';
 
   // Confidence
   document.getElementById('confBar').style.width = pct + '%';
