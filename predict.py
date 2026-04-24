@@ -7,7 +7,7 @@ from PIL import Image
 import tensorflow as tf
 
 MODEL_PATH = "model/best_malnutrition_model_finetuned.keras"
-GDRIVE_FILE_ID = "YOUR_GOOGLE_DRIVE_FILE_ID"
+GDRIVE_FILE_ID = "18S_5_9yEjMJsj5HPnRMyCb-hlyGGerrM"
 
 CLASS_LABELS = ["healthy", "mild", "moderate", "severe"]
 IMG_SIZE = (224, 224)
