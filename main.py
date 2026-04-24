@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from PIL import UnidentifiedImageError
 import uvicorn
 from predict import predict
 
@@ -63,8 +64,16 @@ async def predict_malnutrition(image: UploadFile = File(...)):
     # 4. Run model prediction
     try:
         result = predict(image_bytes)
+    except UnidentifiedImageError:
+        raise HTTPException(
+            status_code=400,
+            detail="Please upload a valid image with a clear front-face photo of the child.",
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Prediction failed. Please retry with a clear, well-lit front-face image of the child.",
+        )
 
     # 5. Return result
     # Example response:
