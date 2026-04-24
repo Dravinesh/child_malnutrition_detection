@@ -6,8 +6,8 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 
-MODEL_PATH = "model/best_malnutrition_model_finetuned.keras"
-GDRIVE_FILE_ID = "18S_5_9yEjMJsj5HPnRMyCb-hlyGGerrM"
+MODEL_PATH = "model/nutriscan_model.h5"
+GDRIVE_FILE_ID = "12_irTrzY9ZDy9lKuZWiaxBGeSsmwE0LM"
 
 CLASS_LABELS = ["healthy", "mild", "moderate", "severe"]
 IMG_SIZE = (224, 224)
