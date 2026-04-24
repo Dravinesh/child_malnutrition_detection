@@ -65,7 +65,7 @@ def check_image_quality(image_bytes: bytes) -> bool:
 def preprocess_image(image_bytes: bytes) -> tf.Tensor:
     img = Image.open(io.BytesIO(image_bytes))
     img = img.convert("RGB")
-    img = img.resize(IMG_SIZE, Image.LANCZOS)
+    img = img.resize(IMG_SIZE)
     img_array = np.array(img, dtype=np.float32)
     img_array = tf.keras.applications.efficientnet.preprocess_input(img_array)
     img_array = np.expand_dims(img_array, axis=0)
@@ -89,15 +89,31 @@ def predict(image_bytes: bytes) -> dict:
     img_tensor = preprocess_image(image_bytes)
 
     # Step 3 — Run inference
+    # Step 3 — Run inference (FIXED)
     output = infer(img_tensor)
-    output_key = list(output.keys())[0]
-    scores = output[output_key].numpy()[0]
+
+# Get correct tensor safely
+    scores = list(output.values())[0].numpy()[0]
+
+# 🔥 Normalize scores (IMPORTANT FIX)
+    scores = np.exp(scores) / np.sum(np.exp(scores))
+
+    print("DEBUG SCORES:", scores)
 
     # Step 4 — Get prediction
     predicted_index = int(np.argmax(scores))
     predicted_label = CLASS_LABELS[predicted_index]
     confidence = float(scores[predicted_index])
+    # 🔥 Stability check (avoid random switching)
+sorted_scores = np.sort(scores)
 
+if sorted_scores[-1] - sorted_scores[-2] < 0.15:
+    return {
+        "classification": "uncertain",
+        "confidence": float(sorted_scores[-1]),
+        "all_scores": {},
+        "message": "Model not confident. Try better image."
+    }
     all_scores = {
         CLASS_LABELS[i]: round(float(scores[i]), 4)
         for i in range(len(CLASS_LABELS))
