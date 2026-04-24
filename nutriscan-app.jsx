@@ -59,7 +59,7 @@ const dietPlans = {
   },
 };
 
-// ✅ FIXED: /predict added at the end + ngrok-skip-browser-warning header added
+// Replace this with your active backend /predict endpoint.
 const BACKEND_URL = "https://c9c2-2405-201-e00f-705c-9135-5099-6546-a23c.ngrok-free.app/predict";
 
 export default function NutriScanApp() {
@@ -93,18 +93,29 @@ export default function NutriScanApp() {
         },
       });
 
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      if (!response.ok) {
+        let message = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData?.detail) message = errorData.detail;
+        } catch (_) {}
+        throw new Error(message);
+      }
+
       const data = await response.json();
+      if (!data?.classification || !dietPlans[data.classification]) {
+        throw new Error("Backend returned an unexpected prediction label.");
+      }
+
       setResult({ ...dietPlans[data.classification], confidence: data.confidence, key: data.classification });
+      setScreen("result");
     } catch (e) {
       console.error("Backend error:", e.message);
-      // Demo fallback if backend is unreachable
-      const keys = ["healthy", "mild", "moderate", "severe"];
-      const demo = keys[Math.floor(Math.random() * keys.length)];
-      setResult({ ...dietPlans[demo], confidence: (0.82 + Math.random() * 0.15).toFixed(2), key: demo, demo: true });
+      setResult(null);
+      setError(`Prediction error: ${e.message}`);
+      setScreen("home");
     } finally {
       setLoading(false);
-      setScreen("result");
     }
   };
 
