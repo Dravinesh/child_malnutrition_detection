@@ -5,17 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>NutriScan</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
-  <!-- Face detection with fallback -->
-  <script>
-    // Try loading face-api, fall back gracefully if blocked
-    var faceApiScript = document.createElement('script');
-    faceApiScript.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
-    faceApiScript.onerror = function() {
-      console.log('Face API CDN blocked, using fallback mode');
-      window.faceApiBlocked = true;
-    };
-    document.head.appendChild(faceApiScript);
-  </script>
+
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -26,25 +16,49 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; background: #050810; font-family: 'Space Grotesk', sans-serif; overflow: hidden; }
-    .app { width: 100vw; height: 100vh; background: #08091A; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-    .grid-bg { position: absolute; inset: 0; z-index: 0; background-image: linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px); background-size: 30px 30px; pointer-events: none; }
+
+    .app {
+      width: 100vw; height: 100vh; background: #08091A;
+      position: relative; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .grid-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background-image: linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 30px 30px; pointer-events: none;
+    }
     .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
     .orb1 { width: 250px; height: 250px; background: rgba(0,229,160,0.12); top: -100px; right: -60px; }
     .orb2 { width: 200px; height: 200px; background: rgba(99,102,241,0.1); bottom: 100px; left: -80px; }
+
     .content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px 0; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600; flex-shrink: 0; }
+
+    /* STATUS BAR */
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 24px 0; color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* SCREENS */
     .screen { flex: 1; display: none; flex-direction: column; overflow: hidden; }
     .screen.active { display: flex; }
 
     /* HOME */
     #home { padding: 0 24px 30px; overflow-y: auto; }
     .logo-section { padding: 28px 0 16px; text-align: center; }
-    .logo-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.25); border-radius: 100px; padding: 6px 14px; margin-bottom: 16px; color: #00E5A0; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; }
+    .logo-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.25);
+      border-radius: 100px; padding: 6px 14px; margin-bottom: 16px;
+      color: #00E5A0; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    }
     .pulse-dot { width: 6px; height: 6px; background: #00E5A0; border-radius: 50%; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
     .app-title { font-family: 'Syne', sans-serif; font-size: clamp(32px,8vw,42px); font-weight: 800; line-height: 1; color: #fff; letter-spacing: -1px; }
     .app-title span { color: #00E5A0; }
     .app-subtitle { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 8px; line-height: 1.5; }
+
     .scan-visual { margin: 16px auto; position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .scan-ring { position: absolute; border-radius: 50%; border: 1px solid; animation: rotateSlow linear infinite; }
     .ring1 { width: 180px; height: 180px; border-color: rgba(0,229,160,0.2); animation-duration: 12s; }
@@ -60,7 +74,13 @@
     .corner.tr{top:0;right:0} .corner.tr::before{top:0;right:0} .corner.tr::after{top:0;right:0}
     .corner.bl{bottom:0;left:0} .corner.bl::before{bottom:0;left:0} .corner.bl::after{bottom:0;left:0}
     .corner.br{bottom:0;right:0} .corner.br::before{bottom:0;right:0} .corner.br::after{bottom:0;right:0}
-    .btn-primary { width: 100%; padding: 18px; border-radius: 20px; border: none; cursor: pointer; font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; touch-action: manipulation; }
+
+    .btn-primary {
+      width: 100%; padding: 18px; border-radius: 20px; border: none; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all 0.2s; touch-action: manipulation;
+    }
     .btn-upload { background: #00E5A0; color: #050810; margin-bottom: 12px; box-shadow: 0 0 30px rgba(0,229,160,0.3); }
     .btn-upload:active { transform: scale(0.97); }
     .btn-camera { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.15); }
@@ -75,21 +95,12 @@
     #camera { padding: 24px; align-items: center; }
     .video-container { width: 100%; flex: 1; border-radius: 24px; overflow: hidden; position: relative; border: 1px solid rgba(0,229,160,0.3); background: #000; max-height: 65vh; }
     video { width: 100%; height: 100%; object-fit: cover; }
-    .cam-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+    .cam-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
     .face-guide { width: 140px; height: 180px; border-radius: 70px; border: 2px solid rgba(0,229,160,0.7); box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); }
-    /* Face detection status badge on camera */
-    .face-status {
-      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-      padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 600;
-      transition: all 0.3s; white-space: nowrap;
-    }
-    .face-status.detected { background: rgba(0,229,160,0.2); border: 1px solid rgba(0,229,160,0.5); color: #00E5A0; }
-    .face-status.not-detected { background: rgba(255,77,109,0.2); border: 1px solid rgba(255,77,109,0.5); color: #FF4D6D; }
     .cam-hint { color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 12px; text-align: center; }
     .cam-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 20px; flex-shrink: 0; }
     .capture-btn { width: 72px; height: 72px; border-radius: 50%; background: #fff; border: 4px solid rgba(255,255,255,0.3); cursor: pointer; transition: all 0.2s; box-shadow: 0 0 30px rgba(255,255,255,0.2); touch-action: manipulation; }
     .capture-btn:active { transform: scale(0.92); }
-    .capture-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .cancel-cam { background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); font-family: 'Space Grotesk', sans-serif; font-size: 13px; cursor: pointer; padding: 10px 20px; border-radius: 100px; touch-action: manipulation; }
 
     /* SCANNING */
@@ -112,18 +123,7 @@
     .result-title { font-family: 'Syne', sans-serif; font-size: 18px; color: #fff; font-weight: 700; }
     .classification-card { margin: 14px 24px; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; border: 1px solid; }
     .class-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); border-radius: 100px; padding: 5px 12px; align-self: flex-start; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-    .class-label { font-family: 'Syne', sans-serif; font-size: clamp(18px,5vw,24px); font-weight: 800; line-height: 1.2; }
-
-    /* ✅ NEW: Malnutrition level indicator bar */
-    .level-indicator { display: flex; gap: 6px; margin: 4px 0; }
-    .level-pill {
-      flex: 1; padding: 8px 4px; border-radius: 10px; text-align: center;
-      font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.25);
-      background: rgba(255,255,255,0.04); transition: all 0.3s;
-    }
-    .level-pill.active { color: #08091A !important; border-color: transparent !important; font-weight: 800; }
-
+    .class-label { font-family: 'Syne', sans-serif; font-size: clamp(22px,6vw,28px); font-weight: 800; }
     .confidence-row { display: flex; align-items: center; gap: 12px; }
     .conf-bar-bg { flex: 1; height: 6px; background: rgba(0,0,0,0.3); border-radius: 100px; overflow: hidden; }
     .conf-bar { height: 100%; border-radius: 100px; }
@@ -136,15 +136,11 @@
     .section-title { font-family: 'Syne', sans-serif; font-size: 15px; color: rgba(255,255,255,0.9); margin-bottom: 10px; font-weight: 700; }
     .meal-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; padding: 14px; margin-bottom: 8px; }
     .meal-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
-    .meal-item { display: flex; align-items: flex-start; gap: 10px; color: rgba(255,255,255,0.8); font-size: 13px; margin-bottom: 6px; line-height: 1.4; }
-    .meal-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .meal-item { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.8); font-size: 13px; margin-bottom: 5px; }
+    .meal-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
     .tips-section { padding: 0 24px 32px; margin-top: 6px; }
     .tip-item { display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 11px 13px; margin-bottom: 7px; color: rgba(255,255,255,0.7); font-size: 13px; line-height: 1.5; }
     .tip-icon { font-size: 13px; flex-shrink: 0; margin-top: 2px; }
-
-    /* No face warning */
-    .no-face-banner { background: rgba(255,77,109,0.12); border: 1px solid rgba(255,77,109,0.35); border-radius: 16px; padding: 14px 16px; margin: 12px 24px 0; display: none; align-items: center; gap: 10px; color: #FF4D6D; font-size: 13px; line-height: 1.4; }
-    .no-face-banner.show { display: flex; }
   </style>
 </head>
 <body>
@@ -188,37 +184,28 @@
     <div class="screen" id="camera">
       <div class="video-container">
         <video id="video" autoplay playsinline muted></video>
-        <div class="cam-overlay">
-          <div class="face-guide"></div>
-          <div class="face-status not-detected" id="faceStatus">👤 No Face Detected</div>
-        </div>
+        <div class="cam-overlay"><div class="face-guide"></div></div>
       </div>
       <p class="cam-hint">Position child's face inside the guide</p>
       <div class="cam-controls">
         <button class="cancel-cam" onclick="stopCamera()">Cancel</button>
-        <button class="capture-btn" id="captureBtn" onclick="capturePhoto()"></button>
+        <button class="capture-btn" onclick="capturePhoto()"></button>
       </div>
       <canvas id="canvas" style="display:none"></canvas>
     </div>
 
     <!-- SCANNING -->
     <div class="screen" id="scanning">
-      <div class="no-face-banner" id="noFaceBanner">
-        <span style="font-size:20px">⚠️</span>
-        <span>No face detected in this image. Please upload a clear photo of the child's face.</span>
+      <div class="preview-frame">
+        <img id="scanPreview" src="" alt="Analyzing" />
+        <div class="scan-line"></div>
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 28px">
-        <div class="preview-frame">
-          <img id="scanPreview" src="" alt="Analyzing" />
-          <div class="scan-line" id="scanLine"></div>
-        </div>
-        <div>
-          <div class="scanning-label" id="scanLabel">Analyzing Image...</div>
-          <div class="scanning-sub" id="scanSub">EfficientNetB0 model processing</div>
-        </div>
-        <div class="progress-dots" id="scanDots">
-          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        </div>
+      <div>
+        <div class="scanning-label">Analyzing Image...</div>
+        <div class="scanning-sub">EfficientNetB0 model processing</div>
+      </div>
+      <div class="progress-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
     </div>
 
@@ -232,18 +219,6 @@
         <div class="preview-thumb"><img id="resultThumb" src="" alt="" /></div>
         <div class="class-badge" id="classBadge"></div>
         <div class="class-label" id="classLabel"></div>
-
-        <!-- ✅ Malnutrition level label + indicator pills -->
-        <div style="margin: 2px 0 0;">
-          <div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Malnutrition Level</div>
-          <div class="level-indicator" id="levelIndicator">
-            <div class="level-pill" id="pill-healthy">Healthy</div>
-            <div class="level-pill" id="pill-mild">Mild</div>
-            <div class="level-pill" id="pill-moderate">Moderate</div>
-            <div class="level-pill" id="pill-severe">Severe</div>
-          </div>
-        </div>
-
         <div class="confidence-row">
           <div class="conf-bar-bg"><div class="conf-bar" id="confBar"></div></div>
           <span class="conf-label" id="confLabel"></span>
@@ -265,235 +240,64 @@
 </div>
 
 <script>
-const BACKEND_URL = "https://nutri-scan-nzts.onrender.com/predict";
+// Replace this with your active backend /predict endpoint.
+const BACKEND_URL = "https://c9c2-2405-201-e00f-705c-9135-5099-6546-a23c.ngrok-free.app/predict";
 
-// ─── EXPANDED DIET PLANS ───
 const dietPlans = {
   healthy: {
-    label: "The child is Healthy",
-    levelKey: "healthy",
-    color: "#00E5A0", glow: "0 0 30px rgba(0,229,160,0.4)", icon: "✦",
-    description: "Child shows normal nutritional status. Maintain current dietary habits and continue regular health checkups.",
+    label: "The child is Healthy", color: "#00E5A0", glow: "0 0 30px rgba(0,229,160,0.4)", icon: "✦",
+    description: "Child shows normal nutritional status. Maintain current dietary habits.",
     suggestions: [
-      { meal: "Breakfast", items: [
-        "Oats porridge with milk, banana & honey",
-        "2 boiled or scrambled eggs",
-        "Fresh orange or sweet lime juice",
-        "Whole wheat toast with peanut butter"
-      ]},
-      { meal: "Mid-Morning Snack", items: [
-        "A bowl of mixed fresh fruits (mango, papaya, apple)",
-        "A handful of roasted nuts (almonds, cashews)",
-        "Low-fat yogurt or buttermilk"
-      ]},
-      { meal: "Lunch", items: [
-        "Rice with lentil dal and ghee",
-        "Seasonal vegetable curry (spinach, beans, carrots)",
-        "Curd / yogurt with cucumber",
-        "Fresh salad with lemon dressing"
-      ]},
-      { meal: "Evening Snack", items: [
-        "Boiled chana (chickpeas) with spices",
-        "Fruit smoothie with milk",
-        "Cheese sandwich on whole wheat bread"
-      ]},
-      { meal: "Dinner", items: [
-        "Whole wheat roti with protein-rich curry (chicken/paneer/tofu)",
-        "Mixed vegetable sabzi",
-        "Warm turmeric milk before bed",
-        "Small bowl of khichdi (rice + lentils)"
-      ]},
+      { meal: "Breakfast", items: ["Oats with milk & banana", "Boiled egg", "Fresh orange juice"] },
+      { meal: "Lunch", items: ["Rice with lentil dal", "Seasonal vegetables", "Yogurt & fruit"] },
+      { meal: "Dinner", items: ["Whole wheat roti", "Protein-rich curry", "Warm milk"] },
+      { meal: "Snacks", items: ["Nuts & seeds", "Fresh fruit", "Cheese & crackers"] },
     ],
-    tips: [
-      "Maintain a balanced diet including all 5 food groups daily",
-      "Encourage at least 60 minutes of physical activity every day",
-      "Ensure adequate sleep — 9-11 hours for school-age children",
-      "Schedule routine health checkups every 6 months",
-      "Keep the child well hydrated — 6-8 glasses of water daily",
-      "Limit junk food, sugary drinks and processed snacks",
-    ],
+    tips: ["Keep a balanced diet with all food groups", "Encourage physical activity daily", "Regular health checkups every 6 months"],
   },
-
   mild: {
-    label: "The child is Mildly Malnourished",
-    levelKey: "mild",
-    color: "#FFD166", glow: "0 0 30px rgba(255,209,102,0.4)", icon: "◈",
-    description: "Mild nutritional deficiency detected. Dietary improvements and close monitoring are recommended.",
+    label: "The child is Mildly Malnourished", color: "#FFD166", glow: "0 0 30px rgba(255,209,102,0.4)", icon: "◈",
+    description: "Mild nutritional deficiency detected. Dietary improvements recommended.",
     suggestions: [
-      { meal: "Breakfast", items: [
-        "Fortified porridge (sorghum/maize) with groundnuts & sugar",
-        "2 boiled eggs with whole wheat bread",
-        "Full-fat milk with mashed banana",
-        "Semolina (rava) upma with vegetables and ghee"
-      ]},
-      { meal: "Mid-Morning Snack", items: [
-        "Peanut butter on whole wheat bread",
-        "Full-fat yogurt with jaggery",
-        "Banana or mango smoothie with milk",
-        "A handful of mixed dry fruits"
-      ]},
-      { meal: "Lunch", items: [
-        "Rice + dal + ghee (generous serving)",
-        "Dark leafy greens (spinach, fenugreek) cooked with oil",
-        "Avocado with lemon and salt",
-        "Chicken or fish curry with rice",
-        "Full-fat curd / lassi"
-      ]},
-      { meal: "Evening Snack", items: [
-        "High-energy biscuits or energy bars",
-        "Boiled sweet potato with butter",
-        "Cheese with crackers",
-        "Banana with peanut butter"
-      ]},
-      { meal: "Dinner", items: [
-        "Protein-rich stew with meat, fish or lentils",
-        "Sweet potato or yam with ghee",
-        "Vitamin-C rich drink (amla juice, orange juice)",
-        "Khichdi with extra lentils and vegetables"
-      ]},
+      { meal: "Breakfast", items: ["Fortified porridge with groundnuts", "2 boiled eggs", "Full-fat milk with banana"] },
+      { meal: "Lunch", items: ["Rice + legume mix", "Dark leafy greens", "Avocado + full-fat yogurt"] },
+      { meal: "Dinner", items: ["Protein-rich stew (meat/fish)", "Sweet potato", "Vitamin-C rich drink"] },
+      { meal: "Snacks", items: ["Peanut butter on bread", "Mango or papaya", "High-energy biscuits"] },
     ],
-    tips: [
-      "Increase calorie density in every meal — add ghee, oil or butter",
-      "Offer 5-6 small meals per day instead of 3 large meals",
-      "Add healthy fats: ghee, groundnuts, avocado, coconut milk",
-      "Monitor weight every week and track progress",
-      "Ensure iron-rich foods: spinach, lentils, meat, fortified cereals",
-      "Consult a doctor if no improvement within 2 weeks",
-      "Deworm the child every 6 months as parasites affect nutrition absorption",
-    ],
+    tips: ["Increase calorie density in every meal", "Add healthy fats (ghee, nuts, avocado)", "Weekly weight monitoring advised"],
   },
-
   moderate: {
-    label: "The child is Moderately Malnourished",
-    levelKey: "moderate",
-    color: "#FF8C42", glow: "0 0 30px rgba(255,140,66,0.4)", icon: "⬡",
-    description: "Moderate malnutrition detected. Structured nutrition rehabilitation and medical supervision are needed urgently.",
+    label: "The child is Moderately Malnourished", color: "#FF8C42", glow: "0 0 30px rgba(255,140,66,0.4)", icon: "⬡",
+    description: "Moderate malnutrition detected. Structured nutrition rehabilitation needed.",
     suggestions: [
-      { meal: "Therapeutic Foods", items: [
-        "RUTF — Ready-to-Use Therapeutic Food (Plumpy'Nut or equivalent)",
-        "F-100 high-energy therapeutic milk (100 kcal/100ml)",
-        "Fortified blended food (corn-soy blend with oil and sugar)",
-        "High-energy peanut-based paste"
-      ]},
-      { meal: "Breakfast", items: [
-        "Enriched porridge with oil, sugar and full-fat milk powder",
-        "Mashed fortified cereals with groundnut paste",
-        "Vitamin-rich fruit puree (mango, papaya, banana)"
-      ]},
-      { meal: "Lunch", items: [
-        "High-energy legume soup with palm oil or groundnut oil",
-        "Mashed rice + lentils + vegetables with extra ghee",
-        "Fish or egg with fortified flour flatbread"
-      ]},
-      { meal: "Dinner", items: [
-        "Meat or fish stew with vegetables",
-        "Enriched porridge with milk powder",
-        "Oral Rehydration Salts (ORS) if dehydration is present"
-      ]},
-      { meal: "Supplements (Daily)", items: [
-        "Iron + Folic acid tablets",
-        "Vitamin A capsule (as per WHO schedule)",
-        "Zinc sulfate supplement",
-        "Multivitamin syrup"
-      ]},
+      { meal: "Breakfast", items: ["RUTF (Ready-to-Use Therapeutic Food)", "Fortified milk (F-100)", "Vitamin-rich fruits"] },
+      { meal: "Lunch", items: ["High-energy peanut paste", "Legume soup with oil", "Mashed fortified cereals"] },
+      { meal: "Dinner", items: ["Meat/fish + vegetable stew", "Enriched porridge", "Oral Rehydration Salts"] },
+      { meal: "Supplements", items: ["Iron + Folic acid", "Vitamin A drops", "Zinc supplements"] },
     ],
-    tips: [
-      "⚠ Consult a nutritionist or pediatrician immediately",
-      "Provide 5-6 small energy-dense meals daily",
-      "Target 150-200 kcal/kg/day during rehabilitation phase",
-      "Monitor for signs of infection — fever, diarrhea, respiratory issues",
-      "Monitor for dehydration — give ORS frequently",
-      "Follow WHO guidelines for Moderate Acute Malnutrition (MAM)",
-      "Track weight gain weekly — target 5-10g/kg/day",
-      "Deworm the child immediately and treat any infections",
-    ],
+    tips: ["Consult a nutritionist immediately", "5-6 small meals per day", "Monitor for infections & dehydration", "Follow WHO SAM protocol"],
   },
-
   severe: {
-    label: "The child is Severely Malnourished",
-    levelKey: "severe",
-    color: "#FF4D6D", glow: "0 0 30px rgba(255,77,109,0.5)", icon: "⚠",
-    description: "Severe acute malnutrition detected. This is a medical emergency. Immediate hospital care is required.",
+    label: "The child is Severely Malnourished", color: "#FF4D6D", glow: "0 0 30px rgba(255,77,109,0.5)", icon: "⚠",
+    description: "Severe acute malnutrition detected. Immediate medical intervention required.",
     suggestions: [
-      { meal: "Phase 1 — Stabilization (Days 1-7)", items: [
-        "F-75 therapeutic milk ONLY (75 kcal/100ml) — DO NOT use F-100 yet",
-        "Feed every 2-3 hours, day and night (8-12 feeds per day)",
-        "ReSoMal — Rehydration Solution for Malnutrition (not standard ORS)",
-        "Do NOT give high-protein or high-energy foods in this phase"
-      ]},
-      { meal: "Phase 2 — Transition (Days 7-14)", items: [
-        "Gradually switch from F-75 to F-100 therapeutic milk",
-        "Introduce RUTF (Ready-to-Use Therapeutic Food) slowly",
-        "Fortified blended food alongside therapeutic milk"
-      ]},
-      { meal: "Phase 3 — Rehabilitation (Weeks 2-6)", items: [
-        "F-100 high-energy milk (100 kcal/100ml) freely",
-        "RUTF packs (Plumpy'Nut) — give as much as child accepts",
-        "Energy-dense home foods: groundnut paste, mashed legumes, oils",
-        "Fortified cereals with full-fat milk powder"
-      ]},
-      { meal: "Emergency Medications", items: [
-        "Glucose solution (10%) — for hypoglycemia (low blood sugar)",
-        "Broad-spectrum antibiotics — for presumed infection",
-        "Vitamin A high-dose — on day 1, day 2, and day 15",
-        "Folic acid daily",
-        "Zinc + Copper supplements",
-        "Potassium and Magnesium supplements"
-      ]},
+      { meal: "Phase 1 (Stabilization)", items: ["F-75 therapeutic milk", "Small frequent feeds every 2-3hrs", "Electrolyte solution (ReSoMal)"] },
+      { meal: "Phase 2 (Rehabilitation)", items: ["F-100 high-energy milk", "RUTF packs", "Fortified blended food"] },
+      { meal: "Micronutrients", items: ["Vitamin A (high dose)", "Folic acid daily", "Zinc + Copper + Multivitamins"] },
+      { meal: "Emergency", items: ["Oral Rehydration Therapy", "Glucose solution (hypoglycemia)", "Antibiotics (if infection)"] },
     ],
-    tips: [
-      "🚨 EMERGENCY: Take the child to a hospital or nutrition center IMMEDIATELY",
-      "Do NOT give standard ORS — use ReSoMal only",
-      "Do NOT give F-100 or high-protein foods in Phase 1 — risk of heart failure",
-      "Monitor blood glucose every 30 minutes — hypoglycemia is life-threatening",
-      "Keep the child warm — hypothermia is a major risk",
-      "Monitor every vital sign: temperature, breathing, pulse",
-      "Follow WHO 10-step inpatient SAM management protocol strictly",
-      "After recovery, ensure monthly follow-up for at least 6 months",
-    ],
-  },
-
-  uncertain: {
-    label: "Unable to Determine",
-    levelKey: null,
-    color: "#A0AEC0", glow: "0 0 30px rgba(160,174,192,0.2)", icon: "?",
-    description: "The image quality or clarity is insufficient for a confident prediction. Please retake the photo.",
-    suggestions: [
-      { meal: "How to get better results", items: [
-        "Use bright natural daylight or well-lit indoor setting",
-        "Ensure the child's full face is clearly visible",
-        "Hold the camera steady — avoid blurry shots",
-        "Remove any objects covering the face (hats, hands, etc.)",
-        "Take the photo straight-on, not at an angle"
-      ]},
-    ],
-    tips: [
-      "Retake the photo in good lighting conditions",
-      "Ensure no shadows fall across the child's face",
-      "Hold phone at face level for best results",
-      "Try uploading a clearer, higher resolution image",
-    ],
+    tips: ["⚠ URGENT: Seek hospital care immediately", "Do NOT give high-protein foods in phase 1", "Monitor every 30 mins for hypoglycemia", "Follow WHO inpatient SAM guidelines"],
   },
 };
 
 let currentPreview = null;
 let mediaStream = null;
-let faceDetectionInterval = null;
-let faceApiLoaded = false;
 
-// Load face-api models
-async function loadFaceApi() {
-  try {
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
-    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-    faceApiLoaded = true;
-    console.log('✅ Face detection loaded');
-  } catch (e) {
-    console.log('Face API failed to load:', e);
-    faceApiLoaded = false;
-  }
+function showHomeError(message) {
+  const errEl = document.getElementById('homeError');
+  errEl.textContent = message;
+  errEl.classList.add('show');
 }
-loadFaceApi();
 
 // Live clock
 function updateClock() {
@@ -502,7 +306,7 @@ function updateClock() {
 }
 updateClock(); setInterval(updateClock, 1000);
 
-// Register Service Worker
+// Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
@@ -527,79 +331,24 @@ function handleFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = async (ev) => {
-    currentPreview = ev.target.result;
-    // Check face in uploaded image
-    const hasFace = await detectFaceInImage(ev.target.result);
-    analyzeImage(ev.target.result, hasFace);
-  };
+  reader.onload = (ev) => { currentPreview = ev.target.result; analyzeImage(ev.target.result); };
   reader.readAsDataURL(file);
   e.target.value = '';
 }
 
-// ─── FACE DETECTION IN UPLOADED IMAGE ───
-async function detectFaceInImage(dataUrl) {
-  if (!faceApiLoaded) return true; // skip check if model not loaded
-  try {
-    const img = await faceapi.fetchImage(dataUrl);
-    const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions());
-    return !!detection;
-  } catch (e) {
-    return true; // if error, allow through
-  }
-}
-
-// ─── CAMERA ───
 async function startCamera() {
   showScreen('camera');
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
     document.getElementById('video').srcObject = mediaStream;
-    // Start real-time face detection on video
-    startFaceDetectionLoop();
   } catch (err) {
     showScreen('home');
-    const errEl = document.getElementById('homeError');
-    errEl.textContent = 'Camera access denied. Please allow camera permission or upload an image.';
-    errEl.classList.add('show');
+    showHomeError('Camera access denied. Please allow camera permission or upload an image.');
   }
-}
-
-function startFaceDetectionLoop() {
-  if (!faceApiLoaded) {
-    // If face-api not loaded, just enable capture button
-    document.getElementById('captureBtn').disabled = false;
-    return;
-  }
-  faceDetectionInterval = setInterval(async () => {
-    const video = document.getElementById('video');
-    if (!video || !mediaStream) return;
-    try {
-      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
-      const statusEl = document.getElementById('faceStatus');
-      const captureBtn = document.getElementById('captureBtn');
-      if (detection) {
-        statusEl.textContent = '✅ Face Detected';
-        statusEl.className = 'face-status detected';
-        captureBtn.disabled = false;
-      } else {
-        statusEl.textContent = '👤 No Face Detected';
-        statusEl.className = 'face-status not-detected';
-        captureBtn.disabled = true;
-      }
-    } catch (e) {
-      document.getElementById('captureBtn').disabled = false;
-    }
-  }, 800);
 }
 
 function stopCamera() {
-  if (faceDetectionInterval) { clearInterval(faceDetectionInterval); faceDetectionInterval = null; }
   if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-  // Reset camera UI
-  document.getElementById('captureBtn').disabled = true;
-  document.getElementById('faceStatus').textContent = '👤 No Face Detected';
-  document.getElementById('faceStatus').className = 'face-status not-detected';
 }
 
 function capturePhoto() {
@@ -611,36 +360,11 @@ function capturePhoto() {
   const dataUrl = canvas.toDataURL('image/jpeg');
   currentPreview = dataUrl;
   stopCamera();
-  analyzeImage(dataUrl, true); // face already confirmed by live detection
+  analyzeImage(dataUrl);
 }
 
-// ─── ANALYZE IMAGE ───
-async function analyzeImage(imageData, hasFace = true) {
+async function analyzeImage(imageData) {
   document.getElementById('scanPreview').src = imageData;
-  document.getElementById('noFaceBanner').classList.remove('show');
-
-  // If no face detected in uploaded image
-  if (!hasFace) {
-    document.getElementById('noFaceBanner').classList.add('show');
-    document.getElementById('scanLabel').textContent = 'No Face Found';
-    document.getElementById('scanSub').textContent = 'Please upload a clear photo of the child\'s face';
-    document.getElementById('scanLine').style.display = 'none';
-    document.getElementById('scanDots').style.display = 'none';
-    showScreen('scanning');
-    setTimeout(() => {
-      document.getElementById('scanLine').style.display = '';
-      document.getElementById('scanDots').style.display = '';
-      document.getElementById('scanLabel').textContent = 'Analyzing Image...';
-      document.getElementById('scanSub').textContent = 'EfficientNetB0 model processing';
-      goHome();
-    }, 3000);
-    return;
-  }
-
-  document.getElementById('scanLabel').textContent = 'Analyzing Image...';
-  document.getElementById('scanSub').textContent = 'EfficientNetB0 model processing';
-  document.getElementById('scanLine').style.display = '';
-  document.getElementById('scanDots').style.display = '';
   showScreen('scanning');
 
   try {
@@ -655,20 +379,31 @@ async function analyzeImage(imageData, hasFace = true) {
       headers: { 'ngrok-skip-browser-warning': 'true' },
     });
 
-    if (!response.ok) throw new Error('Server error');
+    if (!response.ok) {
+      let message = 'Prediction failed. Please try again.';
+      try {
+        const errorData = await response.json();
+        if (errorData?.detail) message = errorData.detail;
+      } catch (_) {}
+      throw new Error(message);
+    }
+
     const data = await response.json();
+
+    if (!data?.classification || !(data.classification in dietPlans)) {
+      throw new Error('Backend returned an unexpected prediction label.');
+    }
+
     showResult(data.classification, data.confidence, false);
   } catch (e) {
     console.error('Backend error:', e.message);
-    const keys = ['healthy', 'mild', 'moderate', 'severe'];
-    const demo = keys[Math.floor(Math.random() * keys.length)];
-    showResult(demo, (0.82 + Math.random() * 0.15).toFixed(2), true);
+    showScreen('home');
+    showHomeError(`Prediction error: ${e.message}`);
   }
 }
 
-// ─── SHOW RESULT ───
 function showResult(classification, confidence, isDemo) {
-  const plan = dietPlans[classification] || dietPlans['uncertain'];
+  const plan = dietPlans[classification];
   const pct = Math.round(confidence * 100);
 
   // Card styling
@@ -690,26 +425,6 @@ function showResult(classification, confidence, isDemo) {
   const label = document.getElementById('classLabel');
   label.textContent = plan.label;
   label.style.color = plan.color;
-
-  // ✅ Level indicator pills
-  const pillColors = { healthy: '#00E5A0', mild: '#FFD166', moderate: '#FF8C42', severe: '#FF4D6D' };
-  ['healthy', 'mild', 'moderate', 'severe'].forEach(level => {
-    const pill = document.getElementById('pill-' + level);
-    if (plan.levelKey === level) {
-      pill.style.background = pillColors[level];
-      pill.style.color = '#08091A';
-      pill.style.borderColor = pillColors[level];
-      pill.classList.add('active');
-    } else {
-      pill.style.background = 'rgba(255,255,255,0.04)';
-      pill.style.color = 'rgba(255,255,255,0.25)';
-      pill.style.borderColor = 'rgba(255,255,255,0.08)';
-      pill.classList.remove('active');
-    }
-  });
-
-  // Hide pills for uncertain
-  document.getElementById('levelIndicator').style.display = plan.levelKey ? 'flex' : 'none';
 
   // Confidence
   document.getElementById('confBar').style.width = pct + '%';
