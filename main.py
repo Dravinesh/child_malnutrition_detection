@@ -1,8 +1,12 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
+import logging
 from predict import predict
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────
 # APP SETUP
@@ -10,12 +14,9 @@ from predict import predict
 app = FastAPI(
     title="NutriScan API",
     description="Child malnutrition detection using EfficientNetB0",
-    version="1.0.0",
+    version="2.0.0",
 )
 
-# ─────────────────────────────────────────
-# CORS — allows React app to call this API
-# ─────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,61 +25,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
-MAX_FILE_SIZE  = 5 * 1024 * 1024  # 5 MB
+ALLOWED_TYPES  = {"image/jpeg", "image/png", "image/webp", "image/jpg", "image/heic", "image/heif"}
+MAX_FILE_SIZE  = 10 * 1024 * 1024  # 10 MB (increased for phone photos)
 
 
 # ─────────────────────────────────────────
 # HEALTH CHECK
-# Visit http://localhost:8000/ to confirm server is running
 # ─────────────────────────────────────────
 @app.get("/")
 async def root():
-    return {"status": "NutriScan API is running ✅"}
+    return {"status": "NutriScan API is running ✅", "version": "2.0.0"}
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
 # ─────────────────────────────────────────
 # PREDICTION ENDPOINT
-# POST /predict  →  receives image, returns classification
 # ─────────────────────────────────────────
 @app.post("/predict")
 async def predict_malnutrition(image: UploadFile = File(...)):
 
-    # 1. Validate file type
-    if image.content_type not in ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type '{image.content_type}'. Upload a JPEG or PNG image.",
-        )
-
-    # 2. Read bytes
+    # 1. Read bytes
     image_bytes = await image.read()
 
-    # 3. Reject empty or oversized files
+    # 2. Size check
     if len(image_bytes) == 0:
-        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+        raise HTTPException(status_code=400, detail="Empty file uploaded.")
     if len(image_bytes) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=413, detail="File too large. Maximum size is 5 MB.")
+        raise HTTPException(status_code=413, detail="File too large. Max 10MB.")
 
-    # 4. Run model prediction
+    # 3. Content type check (relaxed — accept anything image-like)
+    content_type = image.content_type or ""
+    if not content_type.startswith("image/") and not content_type == "application/octet-stream":
+        # Try to proceed anyway — PIL will reject truly invalid files
+        logger.warning(f"Unusual content type: {content_type}, proceeding anyway")
+
+    # 4. Run prediction
     try:
         result = predict(image_bytes)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+        logger.error(f"Prediction error: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction error: {str(e)}")
 
-    # 5. Return result
-    # Example response:
-    # {
-    #   "classification": "mild",
-    #   "confidence": 0.9231,
-    #   "all_scores": { "healthy": 0.03, "mild": 0.92, "moderate": 0.04, "severe": 0.01 }
-    # }
+    logger.info(f"Result: {result}")
     return JSONResponse(content=result)
 
 
 # ─────────────────────────────────────────
 # ENTRY POINT
-# Run:  python main.py
 # ─────────────────────────────────────────
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
