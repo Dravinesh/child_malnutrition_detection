@@ -1,5 +1,3 @@
-
-GDRIVE_FILE_ID     = "1UneK9S_Arlb3lvRtOmo-bIbswjJPzbv6"
 import numpy as np
 from PIL import Image, ImageEnhance
 import tensorflow as tf
