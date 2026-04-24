@@ -20,21 +20,18 @@ def ensure_model_exists():
         print(f"Model already exists: {MODEL_PATH}")
         return
 
-    if GDRIVE_FILE_ID == "YOUR_NEW_FILE_ID":
-        raise ValueError("Set GDRIVE_FILE_ID before deploying.")
-
     url = f"https://drive.google.com/uc?export=download&id={GDRIVE_FILE_ID}"
     print(f"Downloading model from Google Drive: {url}")
-    gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
+    gdown.download(url, MODEL_PATH, quiet=False)
 
     if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(f"Model download failed: {MODEL_PATH}")
 
     size = os.path.getsize(MODEL_PATH)
     print(f"Downloaded model size: {size} bytes")
+
     if size < 1000000:
         raise ValueError(f"Downloaded file is too small to be a valid model: {size} bytes")
-
 
 ensure_model_exists()
 
